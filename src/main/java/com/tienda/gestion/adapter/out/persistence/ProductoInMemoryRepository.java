@@ -4,12 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.stereotype.Repository;
-
 import com.tienda.gestion.application.port.out.ProductoRepository;
 import com.tienda.gestion.domain.model.Producto;
 
-@Repository
+// Implementación de referencia de APF1. APF2 utiliza ProductoJpaAdapter.
 public class ProductoInMemoryRepository implements ProductoRepository {
 
     private final List<Producto> productos = new ArrayList<>();

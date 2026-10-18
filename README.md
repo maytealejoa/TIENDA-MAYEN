@@ -1,5 +1,7 @@
 # Tienda MAYEN - API de Gestión de Productos
 
+> **Entrega vigente: APF2.** Consultar [README_APF2.md](README_APF2.md) para ejecución, base de datos, JWT, roles, ventas, pruebas y Postman. El contenido que sigue conserva la documentación histórica del APF1; el almacenamiento actual utiliza JPA/Hibernate.
+
 > Proyecto académico del curso **Desarrollo Web Integrado** - APF1  
 > Backend con **Spring Boot + API REST + Arquitectura Hexagonal + TDD**
 

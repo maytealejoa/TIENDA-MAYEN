@@ -6,6 +6,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import jakarta.validation.Valid;
+import java.net.URI;
+import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/api/productos")
@@ -18,9 +21,9 @@ public class ProductoController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Producto crearProducto(@RequestBody Producto producto) {
-        return productoUseCase.crearProducto(producto);
+    public ResponseEntity<Producto> crearProducto(@Valid @RequestBody ProductoRequest request) {
+        Producto producto = productoUseCase.crearProducto(request.dominio());
+        return ResponseEntity.created(URI.create("/api/productos/" + producto.getId())).body(producto);
     }
 
     @GetMapping
@@ -36,9 +39,9 @@ public class ProductoController {
     @PutMapping("/{id}")
     public Producto actualizarProducto(
             @PathVariable Long id,
-            @RequestBody Producto producto) {
+            @Valid @RequestBody ProductoRequest producto) {
 
-        return productoUseCase.actualizarProducto(id, producto);
+        return productoUseCase.actualizarProducto(id, producto.dominio());
     }
 
     @DeleteMapping("/{id}")

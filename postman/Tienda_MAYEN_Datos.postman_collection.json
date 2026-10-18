@@ -1,0 +1,1193 @@
+{
+  "info": {
+    "name": "Tienda MAYEN · Catálogo y ventas",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "CARGA DE DATOS. Ejecutar una iteración en orden: catálogo, ventas, consultas. Login automático antes de cada solicitud. Catálogo reutiliza productos existentes por nombre, sin duplicarlos ni modificar stock. Cada ejecución de ventas registra cinco ventas NUEVAS y descuenta existencias. No ejecutar continuamente. Los errores intencionales están en la colección separada APF2."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{adminToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "adminPassword",
+      "value": "admin123"
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const baseUrl = pm.variables.replaceIn('{{baseUrl}}');",
+          "pm.sendRequest({url: baseUrl + '/api/auth/login', method: 'POST',",
+          "  header: {'Content-Type': 'application/json'},",
+          "  body: {mode: 'raw', raw: JSON.stringify({username: 'admin', password: pm.variables.get('adminPassword')})}},",
+          "  (error, response) => {",
+          "    if (error || response.code !== 200) {",
+          "      throw new Error('No se pudo iniciar sesión como admin. Verifica servidor y adminPassword.');",
+          "    }",
+          "    pm.collectionVariables.set('adminToken', response.json().accessToken);",
+          "    pm.variables.set('adminToken', response.json().accessToken);",
+          "  });"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01 · Catálogo: 12 productos (no duplica existentes)",
+      "item": [
+        {
+          "name": "Crear o reutilizar Arroz Costeño 1 kg [esperado 201]",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/productos",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\": \"Arroz Costeño 1 kg\", \"precio\": 5.5, \"stock\": 60, \"stockMinimo\": 10, \"fechaVencimiento\": \"2028-06-30\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest({url: pm.variables.replaceIn('{{baseUrl}}/api/productos'), method: 'GET',",
+                  "  header: {Authorization: 'Bearer ' + pm.variables.get('adminToken')}}, (error, response) => {",
+                  "    if (error || response.code !== 200) throw new Error('No se pudo consultar el catálogo');",
+                  "    const coincidencias = response.json().filter(p => p.nombre === \"Arroz Costeño 1 kg\").sort((a,b) => a.id-b.id);",
+                  "    if (coincidencias.length) {",
+                  "      pm.collectionVariables.set('id_arroz', coincidencias[0].id);",
+                  "      console.log('Producto existente: ' + \"Arroz Costeño 1 kg\" + '. ID ' + coincidencias[0].id + '. No se cambia su stock.');",
+                  "      pm.execution.skipRequest();",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('id_arroz', pm.response.json().id);",
+                  "pm.test('Producto guardado', () => pm.expect(pm.response.json().nombre).to.eql(\"Arroz Costeño 1 kg\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear o reutilizar Leche Gloria 400 g [esperado 201]",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/productos",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\": \"Leche Gloria 400 g\", \"precio\": 4.8, \"stock\": 3, \"stockMinimo\": 5, \"fechaVencimiento\": \"2028-06-30\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest({url: pm.variables.replaceIn('{{baseUrl}}/api/productos'), method: 'GET',",
+                  "  header: {Authorization: 'Bearer ' + pm.variables.get('adminToken')}}, (error, response) => {",
+                  "    if (error || response.code !== 200) throw new Error('No se pudo consultar el catálogo');",
+                  "    const coincidencias = response.json().filter(p => p.nombre === \"Leche Gloria 400 g\").sort((a,b) => a.id-b.id);",
+                  "    if (coincidencias.length) {",
+                  "      pm.collectionVariables.set('id_leche', coincidencias[0].id);",
+                  "      console.log('Producto existente: ' + \"Leche Gloria 400 g\" + '. ID ' + coincidencias[0].id + '. No se cambia su stock.');",
+                  "      pm.execution.skipRequest();",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('id_leche', pm.response.json().id);",
+                  "pm.test('Producto guardado', () => pm.expect(pm.response.json().nombre).to.eql(\"Leche Gloria 400 g\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear o reutilizar Aceite Primor 1 litro [esperado 201]",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/productos",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\": \"Aceite Primor 1 litro\", \"precio\": 10.9, \"stock\": 0, \"stockMinimo\": 4, \"fechaVencimiento\": \"2028-06-30\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest({url: pm.variables.replaceIn('{{baseUrl}}/api/productos'), method: 'GET',",
+                  "  header: {Authorization: 'Bearer ' + pm.variables.get('adminToken')}}, (error, response) => {",
+                  "    if (error || response.code !== 200) throw new Error('No se pudo consultar el catálogo');",
+                  "    const coincidencias = response.json().filter(p => p.nombre === \"Aceite Primor 1 litro\").sort((a,b) => a.id-b.id);",
+                  "    if (coincidencias.length) {",
+                  "      pm.collectionVariables.set('id_aceite', coincidencias[0].id);",
+                  "      console.log('Producto existente: ' + \"Aceite Primor 1 litro\" + '. ID ' + coincidencias[0].id + '. No se cambia su stock.');",
+                  "      pm.execution.skipRequest();",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('id_aceite', pm.response.json().id);",
+                  "pm.test('Producto guardado', () => pm.expect(pm.response.json().nombre).to.eql(\"Aceite Primor 1 litro\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear o reutilizar Azúcar Rubia Cartavio 1 kg [esperado 201]",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/productos",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\": \"Azúcar Rubia Cartavio 1 kg\", \"precio\": 4.5, \"stock\": 50, \"stockMinimo\": 8, \"fechaVencimiento\": \"2028-06-30\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest({url: pm.variables.replaceIn('{{baseUrl}}/api/productos'), method: 'GET',",
+                  "  header: {Authorization: 'Bearer ' + pm.variables.get('adminToken')}}, (error, response) => {",
+                  "    if (error || response.code !== 200) throw new Error('No se pudo consultar el catálogo');",
+                  "    const coincidencias = response.json().filter(p => p.nombre === \"Azúcar Rubia Cartavio 1 kg\").sort((a,b) => a.id-b.id);",
+                  "    if (coincidencias.length) {",
+                  "      pm.collectionVariables.set('id_azucar', coincidencias[0].id);",
+                  "      console.log('Producto existente: ' + \"Azúcar Rubia Cartavio 1 kg\" + '. ID ' + coincidencias[0].id + '. No se cambia su stock.');",
+                  "      pm.execution.skipRequest();",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('id_azucar', pm.response.json().id);",
+                  "pm.test('Producto guardado', () => pm.expect(pm.response.json().nombre).to.eql(\"Azúcar Rubia Cartavio 1 kg\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear o reutilizar Fideos Don Vittorio 500 g [esperado 201]",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/productos",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\": \"Fideos Don Vittorio 500 g\", \"precio\": 3.9, \"stock\": 45, \"stockMinimo\": 8, \"fechaVencimiento\": \"2028-06-30\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest({url: pm.variables.replaceIn('{{baseUrl}}/api/productos'), method: 'GET',",
+                  "  header: {Authorization: 'Bearer ' + pm.variables.get('adminToken')}}, (error, response) => {",
+                  "    if (error || response.code !== 200) throw new Error('No se pudo consultar el catálogo');",
+                  "    const coincidencias = response.json().filter(p => p.nombre === \"Fideos Don Vittorio 500 g\").sort((a,b) => a.id-b.id);",
+                  "    if (coincidencias.length) {",
+                  "      pm.collectionVariables.set('id_fideos', coincidencias[0].id);",
+                  "      console.log('Producto existente: ' + \"Fideos Don Vittorio 500 g\" + '. ID ' + coincidencias[0].id + '. No se cambia su stock.');",
+                  "      pm.execution.skipRequest();",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('id_fideos', pm.response.json().id);",
+                  "pm.test('Producto guardado', () => pm.expect(pm.response.json().nombre).to.eql(\"Fideos Don Vittorio 500 g\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear o reutilizar Atún Florida 170 g [esperado 201]",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/productos",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\": \"Atún Florida 170 g\", \"precio\": 6.5, \"stock\": 35, \"stockMinimo\": 6, \"fechaVencimiento\": \"2028-06-30\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest({url: pm.variables.replaceIn('{{baseUrl}}/api/productos'), method: 'GET',",
+                  "  header: {Authorization: 'Bearer ' + pm.variables.get('adminToken')}}, (error, response) => {",
+                  "    if (error || response.code !== 200) throw new Error('No se pudo consultar el catálogo');",
+                  "    const coincidencias = response.json().filter(p => p.nombre === \"Atún Florida 170 g\").sort((a,b) => a.id-b.id);",
+                  "    if (coincidencias.length) {",
+                  "      pm.collectionVariables.set('id_atun', coincidencias[0].id);",
+                  "      console.log('Producto existente: ' + \"Atún Florida 170 g\" + '. ID ' + coincidencias[0].id + '. No se cambia su stock.');",
+                  "      pm.execution.skipRequest();",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('id_atun', pm.response.json().id);",
+                  "pm.test('Producto guardado', () => pm.expect(pm.response.json().nombre).to.eql(\"Atún Florida 170 g\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear o reutilizar Galletas Soda Field 6 unidades [esperado 201]",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/productos",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\": \"Galletas Soda Field 6 unidades\", \"precio\": 3.5, \"stock\": 40, \"stockMinimo\": 8, \"fechaVencimiento\": \"2028-06-30\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest({url: pm.variables.replaceIn('{{baseUrl}}/api/productos'), method: 'GET',",
+                  "  header: {Authorization: 'Bearer ' + pm.variables.get('adminToken')}}, (error, response) => {",
+                  "    if (error || response.code !== 200) throw new Error('No se pudo consultar el catálogo');",
+                  "    const coincidencias = response.json().filter(p => p.nombre === \"Galletas Soda Field 6 unidades\").sort((a,b) => a.id-b.id);",
+                  "    if (coincidencias.length) {",
+                  "      pm.collectionVariables.set('id_galletas', coincidencias[0].id);",
+                  "      console.log('Producto existente: ' + \"Galletas Soda Field 6 unidades\" + '. ID ' + coincidencias[0].id + '. No se cambia su stock.');",
+                  "      pm.execution.skipRequest();",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('id_galletas', pm.response.json().id);",
+                  "pm.test('Producto guardado', () => pm.expect(pm.response.json().nombre).to.eql(\"Galletas Soda Field 6 unidades\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear o reutilizar Agua San Luis 2.5 litros [esperado 201]",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/productos",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\": \"Agua San Luis 2.5 litros\", \"precio\": 3.8, \"stock\": 50, \"stockMinimo\": 10, \"fechaVencimiento\": \"2028-06-30\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest({url: pm.variables.replaceIn('{{baseUrl}}/api/productos'), method: 'GET',",
+                  "  header: {Authorization: 'Bearer ' + pm.variables.get('adminToken')}}, (error, response) => {",
+                  "    if (error || response.code !== 200) throw new Error('No se pudo consultar el catálogo');",
+                  "    const coincidencias = response.json().filter(p => p.nombre === \"Agua San Luis 2.5 litros\").sort((a,b) => a.id-b.id);",
+                  "    if (coincidencias.length) {",
+                  "      pm.collectionVariables.set('id_agua', coincidencias[0].id);",
+                  "      console.log('Producto existente: ' + \"Agua San Luis 2.5 litros\" + '. ID ' + coincidencias[0].id + '. No se cambia su stock.');",
+                  "      pm.execution.skipRequest();",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('id_agua', pm.response.json().id);",
+                  "pm.test('Producto guardado', () => pm.expect(pm.response.json().nombre).to.eql(\"Agua San Luis 2.5 litros\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear o reutilizar Inca Kola 1.5 litros [esperado 201]",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/productos",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\": \"Inca Kola 1.5 litros\", \"precio\": 7.9, \"stock\": 30, \"stockMinimo\": 6, \"fechaVencimiento\": \"2028-06-30\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest({url: pm.variables.replaceIn('{{baseUrl}}/api/productos'), method: 'GET',",
+                  "  header: {Authorization: 'Bearer ' + pm.variables.get('adminToken')}}, (error, response) => {",
+                  "    if (error || response.code !== 200) throw new Error('No se pudo consultar el catálogo');",
+                  "    const coincidencias = response.json().filter(p => p.nombre === \"Inca Kola 1.5 litros\").sort((a,b) => a.id-b.id);",
+                  "    if (coincidencias.length) {",
+                  "      pm.collectionVariables.set('id_gaseosa', coincidencias[0].id);",
+                  "      console.log('Producto existente: ' + \"Inca Kola 1.5 litros\" + '. ID ' + coincidencias[0].id + '. No se cambia su stock.');",
+                  "      pm.execution.skipRequest();",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('id_gaseosa', pm.response.json().id);",
+                  "pm.test('Producto guardado', () => pm.expect(pm.response.json().nombre).to.eql(\"Inca Kola 1.5 litros\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear o reutilizar Avena Quaker 500 g [esperado 201]",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/productos",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\": \"Avena Quaker 500 g\", \"precio\": 6.2, \"stock\": 25, \"stockMinimo\": 5, \"fechaVencimiento\": \"2028-06-30\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest({url: pm.variables.replaceIn('{{baseUrl}}/api/productos'), method: 'GET',",
+                  "  header: {Authorization: 'Bearer ' + pm.variables.get('adminToken')}}, (error, response) => {",
+                  "    if (error || response.code !== 200) throw new Error('No se pudo consultar el catálogo');",
+                  "    const coincidencias = response.json().filter(p => p.nombre === \"Avena Quaker 500 g\").sort((a,b) => a.id-b.id);",
+                  "    if (coincidencias.length) {",
+                  "      pm.collectionVariables.set('id_avena', coincidencias[0].id);",
+                  "      console.log('Producto existente: ' + \"Avena Quaker 500 g\" + '. ID ' + coincidencias[0].id + '. No se cambia su stock.');",
+                  "      pm.execution.skipRequest();",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('id_avena', pm.response.json().id);",
+                  "pm.test('Producto guardado', () => pm.expect(pm.response.json().nombre).to.eql(\"Avena Quaker 500 g\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear o reutilizar Café Altomayo 50 g [esperado 201]",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/productos",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\": \"Café Altomayo 50 g\", \"precio\": 8.5, \"stock\": 20, \"stockMinimo\": 4, \"fechaVencimiento\": \"2028-06-30\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest({url: pm.variables.replaceIn('{{baseUrl}}/api/productos'), method: 'GET',",
+                  "  header: {Authorization: 'Bearer ' + pm.variables.get('adminToken')}}, (error, response) => {",
+                  "    if (error || response.code !== 200) throw new Error('No se pudo consultar el catálogo');",
+                  "    const coincidencias = response.json().filter(p => p.nombre === \"Café Altomayo 50 g\").sort((a,b) => a.id-b.id);",
+                  "    if (coincidencias.length) {",
+                  "      pm.collectionVariables.set('id_cafe', coincidencias[0].id);",
+                  "      console.log('Producto existente: ' + \"Café Altomayo 50 g\" + '. ID ' + coincidencias[0].id + '. No se cambia su stock.');",
+                  "      pm.execution.skipRequest();",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('id_cafe', pm.response.json().id);",
+                  "pm.test('Producto guardado', () => pm.expect(pm.response.json().nombre).to.eql(\"Café Altomayo 50 g\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear o reutilizar Detergente Bolívar 800 g [esperado 201]",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/productos",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\": \"Detergente Bolívar 800 g\", \"precio\": 9.9, \"stock\": 30, \"stockMinimo\": 5, \"fechaVencimiento\": \"2028-06-30\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest({url: pm.variables.replaceIn('{{baseUrl}}/api/productos'), method: 'GET',",
+                  "  header: {Authorization: 'Bearer ' + pm.variables.get('adminToken')}}, (error, response) => {",
+                  "    if (error || response.code !== 200) throw new Error('No se pudo consultar el catálogo');",
+                  "    const coincidencias = response.json().filter(p => p.nombre === \"Detergente Bolívar 800 g\").sort((a,b) => a.id-b.id);",
+                  "    if (coincidencias.length) {",
+                  "      pm.collectionVariables.set('id_detergente', coincidencias[0].id);",
+                  "      console.log('Producto existente: ' + \"Detergente Bolívar 800 g\" + '. ID ' + coincidencias[0].id + '. No se cambia su stock.');",
+                  "      pm.execution.skipRequest();",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('id_detergente', pm.response.json().id);",
+                  "pm.test('Producto guardado', () => pm.expect(pm.response.json().nombre).to.eql(\"Detergente Bolívar 800 g\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 · Cinco ventas nuevas y sus consultas",
+      "item": [
+        {
+          "name": "Venta 1: arroz × 2, azucar × 1 [esperado 201]",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/ventas",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{ventaBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const lineas = [{\"clave\": \"arroz\", \"nombre\": \"Arroz Costeño 1 kg\", \"cantidad\": 2}, {\"clave\": \"azucar\", \"nombre\": \"Azúcar Rubia Cartavio 1 kg\", \"cantidad\": 1}];",
+                  "pm.sendRequest({url: pm.variables.replaceIn('{{baseUrl}}/api/productos'), method: 'GET',",
+                  "  header: {Authorization: 'Bearer ' + pm.variables.get('adminToken')}}, (error, response) => {",
+                  "    if (error || response.code !== 200) throw new Error('No se pudo consultar el inventario');",
+                  "    let total = 0;",
+                  "    const datos = lineas.map(linea => {",
+                  "      const producto = response.json().filter(p => p.nombre === linea.nombre).sort((a,b) => a.id-b.id)[0];",
+                  "      if (!producto) throw new Error('Primero ejecutar la carpeta de catálogo: falta ' + linea.nombre);",
+                  "      if (producto.stock < linea.cantidad) throw new Error('Stock insuficiente: ' + linea.nombre + '. Reponer antes de repetir esta venta.');",
+                  "      total += producto.precio * linea.cantidad;",
+                  "      return {productoId: producto.id, cantidad: linea.cantidad};",
+                  "    });",
+                  "    pm.variables.set('ventaBody', JSON.stringify({items: datos}));",
+                  "    pm.variables.set('totalEsperado', Math.round(total * 100) / 100);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('venta_1', pm.response.json().id);",
+                  "pm.test('Total calculado con precios vigentes', () => pm.expect(pm.response.json().total).to.eql(Number(pm.variables.get('totalEsperado'))));",
+                  "pm.test('Cantidad de detalles', () => pm.expect(pm.response.json().detalles.length).to.eql(2));",
+                  "pm.test('Usuario autenticado', () => pm.expect(pm.response.json().usuario).to.eql('admin'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar venta 1 [esperado 200]",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/ventas/{{venta_1}}",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Venta 2: fideos × 3, atun × 2 [esperado 201]",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/ventas",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{ventaBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const lineas = [{\"clave\": \"fideos\", \"nombre\": \"Fideos Don Vittorio 500 g\", \"cantidad\": 3}, {\"clave\": \"atun\", \"nombre\": \"Atún Florida 170 g\", \"cantidad\": 2}];",
+                  "pm.sendRequest({url: pm.variables.replaceIn('{{baseUrl}}/api/productos'), method: 'GET',",
+                  "  header: {Authorization: 'Bearer ' + pm.variables.get('adminToken')}}, (error, response) => {",
+                  "    if (error || response.code !== 200) throw new Error('No se pudo consultar el inventario');",
+                  "    let total = 0;",
+                  "    const datos = lineas.map(linea => {",
+                  "      const producto = response.json().filter(p => p.nombre === linea.nombre).sort((a,b) => a.id-b.id)[0];",
+                  "      if (!producto) throw new Error('Primero ejecutar la carpeta de catálogo: falta ' + linea.nombre);",
+                  "      if (producto.stock < linea.cantidad) throw new Error('Stock insuficiente: ' + linea.nombre + '. Reponer antes de repetir esta venta.');",
+                  "      total += producto.precio * linea.cantidad;",
+                  "      return {productoId: producto.id, cantidad: linea.cantidad};",
+                  "    });",
+                  "    pm.variables.set('ventaBody', JSON.stringify({items: datos}));",
+                  "    pm.variables.set('totalEsperado', Math.round(total * 100) / 100);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('venta_2', pm.response.json().id);",
+                  "pm.test('Total calculado con precios vigentes', () => pm.expect(pm.response.json().total).to.eql(Number(pm.variables.get('totalEsperado'))));",
+                  "pm.test('Cantidad de detalles', () => pm.expect(pm.response.json().detalles.length).to.eql(2));",
+                  "pm.test('Usuario autenticado', () => pm.expect(pm.response.json().usuario).to.eql('admin'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar venta 2 [esperado 200]",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/ventas/{{venta_2}}",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Venta 3: galletas × 2, agua × 2 [esperado 201]",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/ventas",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{ventaBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const lineas = [{\"clave\": \"galletas\", \"nombre\": \"Galletas Soda Field 6 unidades\", \"cantidad\": 2}, {\"clave\": \"agua\", \"nombre\": \"Agua San Luis 2.5 litros\", \"cantidad\": 2}];",
+                  "pm.sendRequest({url: pm.variables.replaceIn('{{baseUrl}}/api/productos'), method: 'GET',",
+                  "  header: {Authorization: 'Bearer ' + pm.variables.get('adminToken')}}, (error, response) => {",
+                  "    if (error || response.code !== 200) throw new Error('No se pudo consultar el inventario');",
+                  "    let total = 0;",
+                  "    const datos = lineas.map(linea => {",
+                  "      const producto = response.json().filter(p => p.nombre === linea.nombre).sort((a,b) => a.id-b.id)[0];",
+                  "      if (!producto) throw new Error('Primero ejecutar la carpeta de catálogo: falta ' + linea.nombre);",
+                  "      if (producto.stock < linea.cantidad) throw new Error('Stock insuficiente: ' + linea.nombre + '. Reponer antes de repetir esta venta.');",
+                  "      total += producto.precio * linea.cantidad;",
+                  "      return {productoId: producto.id, cantidad: linea.cantidad};",
+                  "    });",
+                  "    pm.variables.set('ventaBody', JSON.stringify({items: datos}));",
+                  "    pm.variables.set('totalEsperado', Math.round(total * 100) / 100);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('venta_3', pm.response.json().id);",
+                  "pm.test('Total calculado con precios vigentes', () => pm.expect(pm.response.json().total).to.eql(Number(pm.variables.get('totalEsperado'))));",
+                  "pm.test('Cantidad de detalles', () => pm.expect(pm.response.json().detalles.length).to.eql(2));",
+                  "pm.test('Usuario autenticado', () => pm.expect(pm.response.json().usuario).to.eql('admin'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar venta 3 [esperado 200]",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/ventas/{{venta_3}}",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Venta 4: gaseosa × 1, avena × 1, cafe × 1 [esperado 201]",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/ventas",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{ventaBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const lineas = [{\"clave\": \"gaseosa\", \"nombre\": \"Inca Kola 1.5 litros\", \"cantidad\": 1}, {\"clave\": \"avena\", \"nombre\": \"Avena Quaker 500 g\", \"cantidad\": 1}, {\"clave\": \"cafe\", \"nombre\": \"Café Altomayo 50 g\", \"cantidad\": 1}];",
+                  "pm.sendRequest({url: pm.variables.replaceIn('{{baseUrl}}/api/productos'), method: 'GET',",
+                  "  header: {Authorization: 'Bearer ' + pm.variables.get('adminToken')}}, (error, response) => {",
+                  "    if (error || response.code !== 200) throw new Error('No se pudo consultar el inventario');",
+                  "    let total = 0;",
+                  "    const datos = lineas.map(linea => {",
+                  "      const producto = response.json().filter(p => p.nombre === linea.nombre).sort((a,b) => a.id-b.id)[0];",
+                  "      if (!producto) throw new Error('Primero ejecutar la carpeta de catálogo: falta ' + linea.nombre);",
+                  "      if (producto.stock < linea.cantidad) throw new Error('Stock insuficiente: ' + linea.nombre + '. Reponer antes de repetir esta venta.');",
+                  "      total += producto.precio * linea.cantidad;",
+                  "      return {productoId: producto.id, cantidad: linea.cantidad};",
+                  "    });",
+                  "    pm.variables.set('ventaBody', JSON.stringify({items: datos}));",
+                  "    pm.variables.set('totalEsperado', Math.round(total * 100) / 100);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('venta_4', pm.response.json().id);",
+                  "pm.test('Total calculado con precios vigentes', () => pm.expect(pm.response.json().total).to.eql(Number(pm.variables.get('totalEsperado'))));",
+                  "pm.test('Cantidad de detalles', () => pm.expect(pm.response.json().detalles.length).to.eql(3));",
+                  "pm.test('Usuario autenticado', () => pm.expect(pm.response.json().usuario).to.eql('admin'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar venta 4 [esperado 200]",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/ventas/{{venta_4}}",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Venta 5: detergente × 2, arroz × 1, azucar × 2 [esperado 201]",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/ventas",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{ventaBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const lineas = [{\"clave\": \"detergente\", \"nombre\": \"Detergente Bolívar 800 g\", \"cantidad\": 2}, {\"clave\": \"arroz\", \"nombre\": \"Arroz Costeño 1 kg\", \"cantidad\": 1}, {\"clave\": \"azucar\", \"nombre\": \"Azúcar Rubia Cartavio 1 kg\", \"cantidad\": 2}];",
+                  "pm.sendRequest({url: pm.variables.replaceIn('{{baseUrl}}/api/productos'), method: 'GET',",
+                  "  header: {Authorization: 'Bearer ' + pm.variables.get('adminToken')}}, (error, response) => {",
+                  "    if (error || response.code !== 200) throw new Error('No se pudo consultar el inventario');",
+                  "    let total = 0;",
+                  "    const datos = lineas.map(linea => {",
+                  "      const producto = response.json().filter(p => p.nombre === linea.nombre).sort((a,b) => a.id-b.id)[0];",
+                  "      if (!producto) throw new Error('Primero ejecutar la carpeta de catálogo: falta ' + linea.nombre);",
+                  "      if (producto.stock < linea.cantidad) throw new Error('Stock insuficiente: ' + linea.nombre + '. Reponer antes de repetir esta venta.');",
+                  "      total += producto.precio * linea.cantidad;",
+                  "      return {productoId: producto.id, cantidad: linea.cantidad};",
+                  "    });",
+                  "    pm.variables.set('ventaBody', JSON.stringify({items: datos}));",
+                  "    pm.variables.set('totalEsperado', Math.round(total * 100) / 100);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('venta_5', pm.response.json().id);",
+                  "pm.test('Total calculado con precios vigentes', () => pm.expect(pm.response.json().total).to.eql(Number(pm.variables.get('totalEsperado'))));",
+                  "pm.test('Cantidad de detalles', () => pm.expect(pm.response.json().detalles.length).to.eql(3));",
+                  "pm.test('Usuario autenticado', () => pm.expect(pm.response.json().usuario).to.eql('admin'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar venta 5 [esperado 200]",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/ventas/{{venta_5}}",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 · Verificar inventario e historial",
+      "item": [
+        {
+          "name": "Productos guardados [esperado 200]",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/productos",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ventas y detalles [esperado 200]",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/ventas",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Productos con stock bajo [esperado 200]",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/productos/stock-bajo",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Productos agotados [esperado 200]",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/productos/sin-stock",
+            "header": []
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -13,6 +13,10 @@ public interface ProductoRepository {
 
     Optional<Producto> buscarPorId(Long id);
 
+    default Optional<Producto> buscarPorIdParaActualizar(Long id) {
+        return buscarPorId(id);
+    }
+
     Producto actualizar(Producto producto);
 
     void eliminar(Long id);

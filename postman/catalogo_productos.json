@@ -1,0 +1,86 @@
+[
+  {
+    "nombre": "Arroz Costeño 1 kg",
+    "precio": 5.5,
+    "stock": 60,
+    "stockMinimo": 10,
+    "fechaVencimiento": "2028-06-30"
+  },
+  {
+    "nombre": "Leche Gloria 400 g",
+    "precio": 4.8,
+    "stock": 3,
+    "stockMinimo": 5,
+    "fechaVencimiento": "2028-06-30"
+  },
+  {
+    "nombre": "Aceite Primor 1 litro",
+    "precio": 10.9,
+    "stock": 0,
+    "stockMinimo": 4,
+    "fechaVencimiento": "2028-06-30"
+  },
+  {
+    "nombre": "Azúcar Rubia Cartavio 1 kg",
+    "precio": 4.5,
+    "stock": 50,
+    "stockMinimo": 8,
+    "fechaVencimiento": "2028-06-30"
+  },
+  {
+    "nombre": "Fideos Don Vittorio 500 g",
+    "precio": 3.9,
+    "stock": 45,
+    "stockMinimo": 8,
+    "fechaVencimiento": "2028-06-30"
+  },
+  {
+    "nombre": "Atún Florida 170 g",
+    "precio": 6.5,
+    "stock": 35,
+    "stockMinimo": 6,
+    "fechaVencimiento": "2028-06-30"
+  },
+  {
+    "nombre": "Galletas Soda Field 6 unidades",
+    "precio": 3.5,
+    "stock": 40,
+    "stockMinimo": 8,
+    "fechaVencimiento": "2028-06-30"
+  },
+  {
+    "nombre": "Agua San Luis 2.5 litros",
+    "precio": 3.8,
+    "stock": 50,
+    "stockMinimo": 10,
+    "fechaVencimiento": "2028-06-30"
+  },
+  {
+    "nombre": "Inca Kola 1.5 litros",
+    "precio": 7.9,
+    "stock": 30,
+    "stockMinimo": 6,
+    "fechaVencimiento": "2028-06-30"
+  },
+  {
+    "nombre": "Avena Quaker 500 g",
+    "precio": 6.2,
+    "stock": 25,
+    "stockMinimo": 5,
+    "fechaVencimiento": "2028-06-30"
+  },
+  {
+    "nombre": "Café Altomayo 50 g",
+    "precio": 8.5,
+    "stock": 20,
+    "stockMinimo": 4,
+    "fechaVencimiento": "2028-06-30"
+  },
+  {
+    "nombre": "Detergente Bolívar 800 g",
+    "precio": 9.9,
+    "stock": 30,
+    "stockMinimo": 5,
+    "fechaVencimiento": "2028-06-30"
+  }
+]

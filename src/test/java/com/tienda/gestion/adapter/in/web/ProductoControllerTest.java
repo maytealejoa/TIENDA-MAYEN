@@ -36,6 +36,7 @@ class ProductoControllerTest {
 
         mockMvc = MockMvcBuilders
                 .standaloneSetup(controller)
+                .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
 
@@ -57,6 +58,7 @@ class ProductoControllerTest {
                     "nombre": "Inca Kola",
                     "precio": 3.50,
                     "stock": 20,
+                    "stockMinimo": 5,
                     "fechaVencimiento": "2026-12-15"
                 }
                 """;
@@ -75,7 +77,7 @@ class ProductoControllerTest {
     void buscarProductoInexistente_debeRetornar404() throws Exception {
 
         when(productoUseCase.buscarProductoPorId(999L))
-                .thenReturn(null);
+                .thenThrow(new com.tienda.gestion.application.exception.ProductoNoEncontradoException(999L));
 
         mockMvc.perform(
                 get("/api/productos/999")
